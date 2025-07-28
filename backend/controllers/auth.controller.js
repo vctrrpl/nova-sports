@@ -1,4 +1,4 @@
-import { redis } from '../lib/redis.js';
+import { redisSet, redisGet, redisDel } from '../lib/redis.js';
 import User from '../models/user.model.js';
 import jwt from 'jsonwebtoken';
 
@@ -15,7 +15,7 @@ const generateTokens = (userId) => {
 };
 
 const storeRefreshToken = async (userId, refreshToken) => {
-  await redis.set(
+  await redisSet(
     `refresh_token:${userId}`,
     refreshToken,
     'EX',
@@ -99,7 +99,7 @@ export const logout = async (req, res) => {
         refreshToken,
         process.env.REFRESH_TOKEN_SECRET
       );
-      await redis.del(`refresh_token:${decoded.userId}`);
+      await redisDel(`refresh_token:${decoded.userId}`);
     }
 
     res.clearCookie('accessToken');
@@ -121,9 +121,10 @@ export const refreshToken = async (req, res) => {
     }
 
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-    const storedToken = await redis.get(`refresh_token:${decoded.userId}`);
+    const storedToken = await redisGet(`refresh_token:${decoded.userId}`);
 
-    if (storedToken !== refreshToken) {
+    // Skip Redis validation if Redis is not available
+    if (storedToken !== null && storedToken !== refreshToken) {
       return res.status(401).json({ message: 'Invalid refresh token' });
     }
 

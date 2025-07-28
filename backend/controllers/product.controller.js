@@ -1,4 +1,4 @@
-import { redis } from '../lib/redis.js';
+import { redisSet, redisGet } from '../lib/redis.js';
 import { cloudinary } from '../lib/cloudinary.js';
 import Product from '../models/product.model.js';
 
@@ -14,7 +14,7 @@ export const getAllProducts = async (req, res) => {
 
 export const getFeaturedProducts = async (req, res) => {
   try {
-    let featuredProducts = await redis.get('featured_products');
+    let featuredProducts = await redisGet('featured_products');
     if (featuredProducts) {
       return res.json(JSON.parse(featuredProducts));
     }
@@ -31,7 +31,7 @@ export const getFeaturedProducts = async (req, res) => {
 
     // store in redis for future quick access
 
-    await redis.set('feature_products', JSON.stringify(featuredProducts));
+    await redisSet('featured_products', JSON.stringify(featuredProducts));
 
     res.json(featuredProducts);
   } catch (error) {
@@ -158,7 +158,7 @@ async function updatedFeaturedProductsCache() {
     // The lean() method returns a plain JavaScript object(s) instead of full mongoose documents. This can significantly improve performance.
 
     const featuredProducts = await Product.find({ isFeatured: true }).lean();
-    await redis.set('featured_products', JSON.stringify(featuredProducts));
+    await redisSet('featured_products', JSON.stringify(featuredProducts));
   } catch (error) {
     console.log('error in update cache function');
   }

@@ -54,10 +54,20 @@ export const useUserStore = create((set, get) => ({
       set({ user: response.data, checkingAuth: false });
     } catch (error) {
       set({ user: null, checkingAuth: false });
-      // Only show error toast for unexpected errors
+
+      // Enhanced error logging for debugging
+      console.error('Auth check error details:', {
+        status: error.response?.status,
+        message: error.response?.data?.message,
+        url: error.config?.url,
+        code: error.code,
+      });
+
+      // Only show error toast for unexpected errors (not 401s)
       if (!error.response || error.response.status !== 401) {
-        toast.error(error.response?.data?.message || 'An error occurred');
-        console.error('Auth check error:', error);
+        toast.error(
+          error.response?.data?.message || 'Authentication check failed'
+        );
       }
     }
   },
