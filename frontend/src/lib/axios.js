@@ -5,42 +5,55 @@ const axiosInstance = axios.create({
   withCredentials: true, // send cookies to the server
 });
 
-// Add response interceptor to handle /auth/profile 401s silently
+// Global refresh promise to prevent multiple simultaneous refresh attempts
+let refreshPromise = null;
+
+// Add response interceptor to handle errors and token refresh
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Don't reject promise for /auth/profile 401s
-    if (
-      error.config.url === '/auth/profile' &&
-      error.response?.status === 401
-    ) {
-      return { status: 401, data: null };
-    }
-
-    // Log API errors except for profile check 401s
+  async (error) => {
+    // Skip logging for /auth/profile 401s (these are expected when not authenticated)
     if (
       !(error.config.url === '/auth/profile' && error.response?.status === 401)
     ) {
       console.error('API Error:', error);
     }
 
+    const originalRequest = error.config;
+
+    // Handle 401 errors with token refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        // Prevent multiple simultaneous refresh attempts
+        if (refreshPromise) {
+          await refreshPromise;
+          return axiosInstance(originalRequest);
+        }
+
+        // Start refresh token request
+        refreshPromise = axiosInstance.post('/auth/refresh-token');
+        await refreshPromise;
+        refreshPromise = null;
+
+        // Retry the original request
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        refreshPromise = null;
+
+        // If refresh fails, redirect to login or handle logout
+        if (typeof window !== 'undefined') {
+          // Clear any stored auth state and redirect to login
+          window.location.href = '/login';
+        }
+
+        return Promise.reject(refreshError);
+      }
+    }
+
     return Promise.reject(error);
   }
 );
-
-// Prevent browser from logging 401s for profile checks
-const originalFetch = window.fetch;
-window.fetch = function (url, options) {
-  const promise = originalFetch(url, options);
-  if (url.includes('/api/auth/profile')) {
-    return promise.catch((err) => {
-      if (err.status === 401) {
-        return { status: 401, data: null };
-      }
-      throw err;
-    });
-  }
-  return promise;
-};
 
 export default axiosInstance;
