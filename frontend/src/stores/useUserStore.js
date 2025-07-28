@@ -7,6 +7,19 @@ export const useUserStore = create((set, get) => ({
   loading: false,
   checkingAuth: true,
 
+  signup: async (formData) => {
+    try {
+      set({ loading: true });
+      const response = await axios.post('/auth/signup', formData);
+      set({ user: response.data, loading: false });
+      toast.success('Account created successfully!');
+    } catch (error) {
+      set({ loading: false });
+      toast.error(error.response?.data?.message || 'Failed to create account');
+      throw error;
+    }
+  },
+
   login: async (email, password) => {
     try {
       set({ loading: true });
