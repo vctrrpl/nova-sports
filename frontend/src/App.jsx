@@ -20,7 +20,15 @@ function App() {
   const { getCartItems } = useCartStore();
 
   useEffect(() => {
-    checkAuth();
+    const initAuth = async () => {
+      try {
+        await checkAuth();
+      } catch (error) {
+        // checkAuth should handle its own errors, but this is an extra safety net
+        console.warn('Auth initialization failed:', error);
+      }
+    };
+    initAuth();
   }, [checkAuth]);
 
   useEffect(() => {
@@ -72,7 +80,35 @@ function App() {
           />
         </Routes>
       </div>
-      <Toaster />
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        gutter={8}
+        containerClassName=""
+        containerStyle={{}}
+        toastOptions={{
+          className: '',
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            theme: {
+              primary: 'green',
+              secondary: 'black',
+            },
+          },
+          error: {
+            duration: 4000,
+            theme: {
+              primary: 'red',
+              secondary: 'black',
+            },
+          },
+        }}
+      />
     </div>
   );
 }

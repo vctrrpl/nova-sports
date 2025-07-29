@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { MoveRight } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import axios from '../lib/axios';
-import { toast } from 'react-hot-toast';
+import { toast } from '../lib/toast';
 
 const stripePromise = loadStripe(
   'pk_test_51Oe6GeJNlK8eflWDvdt3z98yInVoYOv1qWlyvlyrTFkfOQ96SyKr562XwFmFsBPxJmX7EdspzZjaZ9bp8OydhF4A004Ib2sYpV'

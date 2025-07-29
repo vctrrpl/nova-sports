@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import axios from '../lib/axios';
-import { toast } from 'react-hot-toast';
+import { toast } from '../lib/toast';
 
 export const useUserStore = create((set, get) => ({
   user: null,
@@ -55,16 +55,16 @@ export const useUserStore = create((set, get) => ({
     } catch (error) {
       set({ user: null, checkingAuth: false });
 
-      // Enhanced error logging for debugging
-      console.error('Auth check error details:', {
-        status: error.response?.status,
-        message: error.response?.data?.message,
-        url: error.config?.url,
-        code: error.code,
-      });
+      // Only log non-401 errors (401 is expected when not authenticated)
+      if (error.response?.status !== 401) {
+        console.error('Auth check error details:', {
+          status: error.response?.status,
+          message: error.response?.data?.message,
+          url: error.config?.url,
+          code: error.code,
+        });
 
-      // Only show error toast for unexpected errors (not 401s)
-      if (!error.response || error.response.status !== 401) {
+        // Only show error toast for unexpected errors (not 401s)
         toast.error(
           error.response?.data?.message || 'Authentication check failed'
         );

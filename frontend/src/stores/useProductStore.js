@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import toast from 'react-hot-toast';
+import { toast } from '../lib/toast';
 import axios from '../lib/axios';
 
 export const useProductStore = create((set) => ({
@@ -18,7 +18,12 @@ export const useProductStore = create((set) => ({
         loading: false,
       }));
     } catch (error) {
-      toast.error(error.response.data.error);
+      console.error('Create product error:', error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        'Failed to create product';
+      toast.error(errorMessage);
       set({ loading: false });
     }
   },
@@ -30,8 +35,13 @@ export const useProductStore = create((set) => ({
       const response = await axios.get('/products');
       set({ products: response.data.products, loading: false });
     } catch (error) {
+      console.error('Fetch all products error:', error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        'Failed to fetch products';
       set({ error: 'Failed to fetch products', loading: false });
-      toast.error(error.response.data.error || 'Failed to fetch products');
+      toast.error(errorMessage);
     }
   },
 
@@ -61,8 +71,13 @@ export const useProductStore = create((set) => ({
         loading: false,
       }));
     } catch (error) {
+      console.error('Delete product error:', error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        'Failed to delete product';
       set({ loading: false });
-      toast.error(error.response.data.error || 'Failed to delete product');
+      toast.error(errorMessage);
     }
   },
 
@@ -81,8 +96,13 @@ export const useProductStore = create((set) => ({
         loading: false,
       }));
     } catch (error) {
+      console.error('Update product error:', error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        'Failed to update product';
       set({ loading: false });
-      toast.error(error.response.data.error || 'Failed to update product');
+      toast.error(errorMessage);
     }
   },
 

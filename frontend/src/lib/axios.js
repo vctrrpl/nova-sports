@@ -12,17 +12,24 @@ let refreshPromise = null;
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Skip logging for /auth/profile 401s (these are expected when not authenticated)
-    if (
-      !(error.config.url === '/auth/profile' && error.response?.status === 401)
-    ) {
+    // Skip logging for 401 errors as they are expected during auth checks
+    const is401 = error.response?.status === 401;
+
+    if (!is401) {
       console.error('API Error:', error);
     }
 
     const originalRequest = error.config;
 
-    // Handle 401 errors with token refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Handle 401 errors with token refresh, but skip for auth endpoints
+    const isAuthEndpoint = originalRequest?.url?.includes('auth/');
+
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !isAuthEndpoint
+    ) {
       originalRequest._retry = true;
 
       try {
@@ -42,12 +49,8 @@ axiosInstance.interceptors.response.use(
       } catch (refreshError) {
         refreshPromise = null;
 
-        // If refresh fails, redirect to login or handle logout
-        if (typeof window !== 'undefined') {
-          // Clear any stored auth state and redirect to login
-          window.location.href = '/login';
-        }
-
+        // Don't redirect directly, let the component handle auth state
+        console.warn('Token refresh failed, user needs to re-authenticate');
         return Promise.reject(refreshError);
       }
     }
